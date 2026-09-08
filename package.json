@@ -1,0 +1,32 @@
+{
+  "name": "emailhealth",
+  "version": "1.0.0",
+  "description": "Point emailhealth at a domain, get back a scored report on SPF, DKIM, DMARC, MTA-STS, TLS-RPT, and MX health",
+  "keywords": [
+    "email",
+    "health",
+    "dns",
+    "spf",
+    "dkim",
+    "dmarc",
+    "mta-sts",
+    "tls-rpt",
+    "mx-health"
+  ],
+  "license": "ISC",
+  "author": "Charles Inwald",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "scripts": {
+    "start": "tsc && node dist/index.js",
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^26.5.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "commander": "^15.0.0"
+  }
+}
