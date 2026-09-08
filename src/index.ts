@@ -5,6 +5,8 @@ const checkEmailHealth = async (email: string) => {
   return true;
 };
 
+
+
 const main = () => {
   const args = readCommandLineArguments();
   const email = args.email;

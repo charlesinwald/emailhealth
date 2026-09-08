@@ -22,7 +22,6 @@ const readCommandLineArguments = () => {
             process.exit(1);
         }
     })
-        .option("-e, --email <email>", "The email to check")
         .parse(process.argv);
     const opts = commander_1.program.opts();
     const [positionalEmail] = commander_1.program.args;

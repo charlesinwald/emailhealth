@@ -19,8 +19,8 @@ export const readCommandLineArguments = () => {
         process.exit(1);
       }
     })
-    .option("-e, --email <email>", "The email to check")
     .parse(process.argv);
+
   const opts = program.opts();
   const [positionalEmail] = program.args;
   return { email: opts.email ?? positionalEmail };
