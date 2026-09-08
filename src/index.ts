@@ -1,11 +1,5 @@
+import { checkEmailHealth } from "./checkEmailHealth";
 import { readCommandLineArguments } from "./utils";
-
-const checkEmailHealth = async (email: string) => {
-  console.log(`Checking email health for ${email}`);
-  return true;
-};
-
-
 
 const main = () => {
   const args = readCommandLineArguments();

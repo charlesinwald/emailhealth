@@ -25,3 +25,7 @@ export const readCommandLineArguments = () => {
   const [positionalEmail] = program.args;
   return { email: opts.email ?? positionalEmail };
 };
+
+export const parseNestedObject = (obj: any) => {
+  return JSON.stringify(obj, null, 2);
+};

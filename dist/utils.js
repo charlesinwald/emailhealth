@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.readCommandLineArguments = void 0;
+exports.parseNestedObject = exports.readCommandLineArguments = void 0;
 const commander_1 = require("commander");
 // Ensure the email is a valid email address with Regex
 function validateEmail(email) {
@@ -28,3 +28,7 @@ const readCommandLineArguments = () => {
     return { email: (_a = opts.email) !== null && _a !== void 0 ? _a : positionalEmail };
 };
 exports.readCommandLineArguments = readCommandLineArguments;
+const parseNestedObject = (obj) => {
+    return JSON.stringify(obj, null, 2);
+};
+exports.parseNestedObject = parseNestedObject;
