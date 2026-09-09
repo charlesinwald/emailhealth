@@ -4,12 +4,19 @@ import { ui } from "@rezi-ui/core";
 import { createNodeApp } from "@rezi-ui/node";
 import type { Report } from "./types";
 
+type State = { reports: Report[]; reportScore: number };
+
 const main = async () => {
   const args = readCommandLineArguments();
   const email = args.email;
   const reports = await checkEmailHealth(email);
-  type State = { reports: Report[] };
-  const app = createNodeApp<State>({ initialState: { reports } });
+  const reportScore =
+    reports.reduce((acc, report) => {
+      return acc + (report.status === "healthy" ? 1 : 0);
+    }, 0) / reports.length || 0;
+  const app = createNodeApp<State>({
+    initialState: { reports, reportScore },
+  });
   app.view((state) =>
     ui.page({
       p: 1,
@@ -35,11 +42,12 @@ const main = async () => {
                   ...report,
                   expanded: expanded.includes(report.title),
                 })),
+                reportScore: state.reportScore,
               }));
             },
             items: state.reports.map((report) => ({
               key: report.title,
-              title: report.title,
+              title: ` ${report.status === "healthy" ? "✓" : "✗"} ${report.title} (${report.status.charAt(0).toUpperCase() + report.status.slice(1)})`,
               content: ui.box(
                 { width: "full", flex: 1, p: 1, border: "none" },
                 [
@@ -59,6 +67,7 @@ const main = async () => {
               ),
             })),
           }),
+          ui.gauge(state.reportScore, { label: "Health", variant: "compact" }),
         ],
       ),
     }),

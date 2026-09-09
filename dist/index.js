@@ -17,7 +17,12 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const args = (0, utils_1.readCommandLineArguments)();
     const email = args.email;
     const reports = yield (0, checkEmailHealth_1.checkEmailHealth)(email);
-    const app = (0, node_1.createNodeApp)({ initialState: { reports } });
+    const reportScore = reports.reduce((acc, report) => {
+        return acc + (report.status === "healthy" ? 1 : 0);
+    }, 0) / reports.length || 0;
+    const app = (0, node_1.createNodeApp)({
+        initialState: { reports, reportScore },
+    });
     app.view((state) => core_1.ui.page({
         p: 1,
         gap: 1,
@@ -37,11 +42,12 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                 onChange: (expanded) => {
                     app.update((s) => ({
                         reports: s.reports.map((report) => (Object.assign(Object.assign({}, report), { expanded: expanded.includes(report.title) }))),
+                        reportScore: state.reportScore,
                     }));
                 },
                 items: state.reports.map((report) => ({
                     key: report.title,
-                    title: report.title,
+                    title: ` ${report.status === "healthy" ? "✓" : "✗"} ${report.title} (${report.status.charAt(0).toUpperCase() + report.status.slice(1)})`,
                     content: core_1.ui.box({ width: "full", flex: 1, p: 1, border: "none" }, [
                         core_1.ui.virtualList({
                             id: `report-${report.title}`,
@@ -57,6 +63,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                     ]),
                 })),
             }),
+            core_1.ui.gauge(state.reportScore, { label: "Health", variant: "compact" }),
         ]),
     }));
     yield app.start();
