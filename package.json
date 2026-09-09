@@ -16,9 +16,9 @@
   "license": "ISC",
   "author": "Charles Inwald",
   "type": "commonjs",
-  "main": "dist/index.js",
+  "main": "dist/index.ts",
   "scripts": {
-    "start": "tsc && node dist/index.js",
+    "start": "tsc && npx tsx dist/index.js",
     "build": "tsc"
   },
   "devDependencies": {
@@ -27,6 +27,8 @@
     "typescript": "^5.7.3"
   },
   "dependencies": {
+    "@rezi-ui/core": "^0.1.0-beta.2",
+    "@rezi-ui/node": "^0.1.0-beta.2",
     "commander": "^15.0.0"
   }
 }

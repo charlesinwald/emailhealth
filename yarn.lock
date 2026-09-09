@@ -27,6 +27,26 @@
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
 
+"@rezi-ui/core@0.1.0-beta.2", "@rezi-ui/core@^0.1.0-beta.2":
+  version "0.1.0-beta.2"
+  resolved "https://registry.yarnpkg.com/@rezi-ui/core/-/core-0.1.0-beta.2.tgz#8a1c154b7f40d885126dc2d00a5dcefd146478c5"
+  integrity sha512-XWr4Qf1fp02rAEYZQDYS4FEK3UH4pSsC7c5xDJa7KrS7rHJNyvbLKf14iNRPAhTgWK95RRJcMSBb0PlfImL6XQ==
+
+"@rezi-ui/native@0.1.0-beta.2":
+  version "0.1.0-beta.2"
+  resolved "https://registry.yarnpkg.com/@rezi-ui/native/-/native-0.1.0-beta.2.tgz#e3d9dedcce721bf30625dab7b74cf417583a932e"
+  integrity sha512-kvxYDIa/Ai1a1fRzoQZEgDdHFMc7/jojWhYxALFnmAfREIQyxr8ViBhgPpHO91ZIizLh2KTbV6KMg079I9ItTQ==
+
+"@rezi-ui/node@^0.1.0-beta.2":
+  version "0.1.0-beta.2"
+  resolved "https://registry.yarnpkg.com/@rezi-ui/node/-/node-0.1.0-beta.2.tgz#714b9f863894967e1f109a2ed024d219d9b27d0e"
+  integrity sha512-0Jz3M+gJgeg48C8bAR6kLroBYMjdelxU6BAStKN2t3s4saq4JSaaCh1OxZFZUeNTaD9hfapFqx4p4Uc9vQ85TA==
+  dependencies:
+    "@rezi-ui/core" "0.1.0-beta.2"
+    "@rezi-ui/native" "0.1.0-beta.2"
+    "@xterm/headless" "^6.0.0"
+    node-pty "^1.1.0"
+
 "@tsconfig/node10@^1.0.7":
   version "1.0.13"
   resolved "https://registry.yarnpkg.com/@tsconfig/node10/-/node10-1.0.13.tgz#56105a9a8c786e8f15e35746879cf2d52275485b"
@@ -53,6 +73,11 @@
   integrity sha512-dVSGpriSoCgz8WnDNTuSSuSv1PC/ALXihO4ulRZt7Md8k9mlbdin3lGOcDE8SnWOgf513ByWlXd7BK4azmyg/A==
   dependencies:
     undici-types "~8.9.0"
+
+"@xterm/headless@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@xterm/headless/-/headless-6.0.0.tgz#a839dee397c49834bb220fa5951d60f4b7f0aa11"
+  integrity sha512-5Yj1QINYCyzrZtf8OFIHi47iQtI+0qYFPHmouEfG8dHNxbZ9Tb9YGSuLcsEwj9Z+OL75GJqPyJbyoFer80a2Hw==
 
 acorn-walk@^8.1.1:
   version "8.3.5"
@@ -90,6 +115,18 @@ make-error@^1.1.1:
   version "1.3.6"
   resolved "https://registry.yarnpkg.com/make-error/-/make-error-1.3.6.tgz#2eb2e37ea9b67c4891f684a1394799af484cf7a2"
   integrity sha512-s8UhlNe7vPKomQhC1qFelMokr/Sc3AgNbso3n74mVPA5LTZwkB9NlXf4XPamLxJE8h0gh73rM94xvwRT2CVInw==
+
+node-addon-api@^7.1.0:
+  version "7.1.1"
+  resolved "https://registry.yarnpkg.com/node-addon-api/-/node-addon-api-7.1.1.tgz#1aba6693b0f255258a049d621329329322aad558"
+  integrity sha512-5m3bsyrjFWE1xf7nz7YXdN4udnVtXK6/Yfgn5qnahL6bCkf2yKt4k3nuTKAtT4r3IG8JNR2ncsIMdZuAzJjHQQ==
+
+node-pty@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/node-pty/-/node-pty-1.1.0.tgz#161936d45a47751c2e3b694c365e73017417a887"
+  integrity sha512-20JqtutY6JPXTUnL0ij1uad7Qe1baT46lyolh2sSENDd4sTzKZ4nmAFkeAARDKwmlLjPx6XKRlwRUxwjOy+lUg==
+  dependencies:
+    node-addon-api "^7.1.0"
 
 ts-node@^10.9.2:
   version "10.9.2"

@@ -29,3 +29,5 @@ export const readCommandLineArguments = () => {
 export const parseNestedObject = (obj: any) => {
   return JSON.stringify(obj, null, 2);
 };
+export const formatReportMessage = (message: string) =>
+  message.replace(/\\n/g, "\n");
