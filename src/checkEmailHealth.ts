@@ -3,11 +3,47 @@ import { parseNestedObject } from "./utils";
 import type { Report } from "./types";
 
 const SPF_RECORD_PREFIX = /^v=spf1\b/i;
+const COMMON_DKIM_SELECTORS = [
+  "default",
+  "google",
+  "k1",
+  "s1",
+  "s2",
+  "selector1",
+  "selector2",
+] as const;
 
 export const selectSpfRecords = (txtRecords: string[][]): string[] =>
   txtRecords
     .map((chunks) => chunks.join(""))
     .filter((record) => SPF_RECORD_PREFIX.test(record.trim()));
+
+export const dkimLookupNames = (domain: string): string[] => [
+  `_domainkey.${domain}`,
+  ...COMMON_DKIM_SELECTORS.map(
+    (selector) => `${selector}._domainkey.${domain}`,
+  ),
+];
+
+const joinTxtRecords = (records: string[][]): string[] =>
+  records.map((chunks) => chunks.join(""));
+
+export const resolveDkimRecords = async (
+  domain: string,
+  resolveTxt: typeof dns.resolveTxt = dns.resolveTxt,
+): Promise<ReadonlyArray<{ name: string; records: string[] }>> => {
+  const results = await Promise.allSettled(
+    dkimLookupNames(domain).map(async (name) => ({
+      name,
+      records: joinTxtRecords(await resolveTxt(name)),
+    })),
+  );
+  return results.flatMap((result) =>
+    result.status === "fulfilled" && result.value.records.length > 0
+      ? [result.value]
+      : [],
+  );
+};
 
 export const checkEmailHealth = async (email: string) => {
   console.log(`Checking email health for ${email}`);
@@ -119,8 +155,8 @@ export const checkEmailHealth = async (email: string) => {
       message: `Error resolving DMARC records for ${domain}: ${error}`,
     });
   }
-  try {
-    const dkimRecords = await dns.resolveTxt(`_dmarc.${domain}`);
+  const dkimRecords = await resolveDkimRecords(domain);
+  if (dkimRecords.length > 0) {
     console.log(
       `DKIM records for ${domain}: ${parseNestedObject(dkimRecords)}`,
     );
@@ -130,13 +166,13 @@ export const checkEmailHealth = async (email: string) => {
       status: "healthy",
       message: `DKIM records for ${domain}:\n${parseNestedObject(dkimRecords)}`,
     });
-  } catch (error) {
-    console.error(`Error resolving DKIM records for ${domain}: ${error}`);
+  } else {
+    console.error(`Error resolving DKIM records for ${domain}`);
     reports.push({
       email,
       title: "DKIM Records",
       status: "unhealthy",
-      message: `Error resolving DKIM records for ${domain}: ${error}`,
+      message: `Error resolving DKIM records for ${domain}: no TXT records found at ${dkimLookupNames(domain).join(", ")}`,
     });
   }
   return reports;

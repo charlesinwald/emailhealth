@@ -9,14 +9,41 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkEmailHealth = exports.selectSpfRecords = void 0;
+exports.checkEmailHealth = exports.resolveDkimRecords = exports.dkimLookupNames = exports.selectSpfRecords = void 0;
 const node_dns_1 = require("node:dns");
 const utils_1 = require("./utils");
 const SPF_RECORD_PREFIX = /^v=spf1\b/i;
+const COMMON_DKIM_SELECTORS = [
+    "default",
+    "google",
+    "k1",
+    "s1",
+    "s2",
+    "selector1",
+    "selector2",
+];
 const selectSpfRecords = (txtRecords) => txtRecords
     .map((chunks) => chunks.join(""))
     .filter((record) => SPF_RECORD_PREFIX.test(record.trim()));
 exports.selectSpfRecords = selectSpfRecords;
+const dkimLookupNames = (domain) => [
+    `_domainkey.${domain}`,
+    ...COMMON_DKIM_SELECTORS.map((selector) => `${selector}._domainkey.${domain}`),
+];
+exports.dkimLookupNames = dkimLookupNames;
+const joinTxtRecords = (records) => records.map((chunks) => chunks.join(""));
+const resolveDkimRecords = (domain_1, ...args_1) => __awaiter(void 0, [domain_1, ...args_1], void 0, function* (domain, resolveTxt = node_dns_1.promises.resolveTxt) {
+    const results = yield Promise.allSettled((0, exports.dkimLookupNames)(domain).map((name) => __awaiter(void 0, void 0, void 0, function* () {
+        return ({
+            name,
+            records: joinTxtRecords(yield resolveTxt(name)),
+        });
+    })));
+    return results.flatMap((result) => result.status === "fulfilled" && result.value.records.length > 0
+        ? [result.value]
+        : []);
+});
+exports.resolveDkimRecords = resolveDkimRecords;
 const checkEmailHealth = (email) => __awaiter(void 0, void 0, void 0, function* () {
     console.log(`Checking email health for ${email}`);
     const domain = email.split("@")[1];
@@ -129,8 +156,8 @@ const checkEmailHealth = (email) => __awaiter(void 0, void 0, void 0, function* 
             message: `Error resolving DMARC records for ${domain}: ${error}`,
         });
     }
-    try {
-        const dkimRecords = yield node_dns_1.promises.resolveTxt(`_dmarc.${domain}`);
+    const dkimRecords = yield (0, exports.resolveDkimRecords)(domain);
+    if (dkimRecords.length > 0) {
         console.log(`DKIM records for ${domain}: ${(0, utils_1.parseNestedObject)(dkimRecords)}`);
         reports.push({
             email,
@@ -139,13 +166,13 @@ const checkEmailHealth = (email) => __awaiter(void 0, void 0, void 0, function* 
             message: `DKIM records for ${domain}:\n${(0, utils_1.parseNestedObject)(dkimRecords)}`,
         });
     }
-    catch (error) {
-        console.error(`Error resolving DKIM records for ${domain}: ${error}`);
+    else {
+        console.error(`Error resolving DKIM records for ${domain}`);
         reports.push({
             email,
             title: "DKIM Records",
             status: "unhealthy",
-            message: `Error resolving DKIM records for ${domain}: ${error}`,
+            message: `Error resolving DKIM records for ${domain}: no TXT records found at ${(0, exports.dkimLookupNames)(domain).join(", ")}`,
         });
     }
     return reports;
