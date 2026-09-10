@@ -11,11 +11,11 @@ const main = async () => {
   const email = args.email;
   const reports = await checkEmailHealth(email);
   const reportScore =
-    reports.reduce((acc, report) => {
+     reports && reports.length > 0 ? reports.reduce((acc, report) => {
       return acc + (report.status === "healthy" ? 1 : 0);
-    }, 0) / reports.length || 0;
+    }, 0) / (reports?.length || 0) : 0;
   const app = createNodeApp<State>({
-    initialState: { reports, reportScore },
+    initialState: { reports: reports || [], reportScore },
   });
   app.view((state) =>
     ui.page({

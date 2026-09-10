@@ -32,11 +32,11 @@ const dkimLookupNames = (domain) => [
 ];
 exports.dkimLookupNames = dkimLookupNames;
 const joinTxtRecords = (records) => records.map((chunks) => chunks.join(""));
-const resolveDkimRecords = (domain_1, ...args_1) => __awaiter(void 0, [domain_1, ...args_1], void 0, function* (domain, resolveTxt = node_dns_1.promises.resolveTxt) {
+const resolveDkimRecords = (domain, nsResolver) => __awaiter(void 0, void 0, void 0, function* () {
     const results = yield Promise.allSettled((0, exports.dkimLookupNames)(domain).map((name) => __awaiter(void 0, void 0, void 0, function* () {
         return ({
             name,
-            records: joinTxtRecords(yield resolveTxt(name)),
+            records: joinTxtRecords(yield nsResolver.resolveTxt(name)),
         });
     })));
     return results.flatMap((result) => result.status === "fulfilled" && result.value.records.length > 0
@@ -50,131 +50,151 @@ const checkEmailHealth = (email) => __awaiter(void 0, void 0, void 0, function* 
     const reports = [];
     let txtRecords = [];
     try {
-        const ipAddress = yield node_dns_1.promises.resolve(domain);
-        console.log(`IP address for ${domain}: ${ipAddress}`);
+        const nsResolver = new node_dns_1.promises.Resolver({ timeout: 5000, tries: 2 });
+        const nsRecords = yield nsResolver.resolve(domain, "NS");
+        console.log(`NS records for ${domain}: ${nsRecords}`);
         reports.push({
             email,
-            title: "IP Address",
+            title: "NS Records",
             status: "healthy",
-            message: `IP address for ${domain}: ${ipAddress}`,
+            message: `NS records for ${domain}: ${nsRecords}`,
         });
-    }
-    catch (error) {
-        console.error(`Error resolving IP address for ${domain}: ${error}`);
-        reports.push({
-            email,
-            title: "IP Address",
-            status: "unhealthy",
-            message: `Error resolving IP address for ${domain}: ${error}`,
-        });
-    }
-    try {
-        const mxRecords = yield node_dns_1.promises.resolveMx(domain);
-        console.log(`MX records for ${domain}: ${(0, utils_1.parseNestedObject)(mxRecords)}`);
-        reports.push({
-            email,
-            title: "MX Records",
-            status: "healthy",
-            message: `MX records for ${domain}:\n${(0, utils_1.parseNestedObject)(mxRecords)}`,
-        });
-    }
-    catch (error) {
-        console.error(`Error resolving MX records for ${domain}: ${error}`);
-        reports.push({
-            email,
-            title: "MX Records",
-            status: "unhealthy",
-            message: `Error resolving MX records for ${domain}: ${error}`,
-        });
-    }
-    try {
-        txtRecords = yield node_dns_1.promises.resolveTxt(domain);
-        console.log(`TXT records for ${domain}: ${(0, utils_1.parseNestedObject)(txtRecords)}`);
-        reports.push({
-            email,
-            title: "TXT Records",
-            status: "healthy",
-            message: `TXT records for ${domain}:\n${(0, utils_1.parseNestedObject)(txtRecords)}`,
-        });
-    }
-    catch (error) {
-        console.error(`Error resolving TXT records for ${domain}: ${error}`);
-        reports.push({
-            email,
-            title: "TXT Records",
-            status: "unhealthy",
-            message: `Error resolving TXT records for ${domain}: ${error}`,
-        });
-    }
-    try {
-        const spfRecords = yield node_dns_1.promises.resolveTxt(`_spf.${domain}`);
-        console.log(`SPF records for ${domain}: ${(0, utils_1.parseNestedObject)(spfRecords)}`);
-        reports.push({
-            email,
-            title: "SPF Records",
-            status: "healthy",
-            message: `SPF records for ${domain}:\n${(0, utils_1.parseNestedObject)(spfRecords)}`,
-        });
-    }
-    catch (error) {
-        const spfFromTxt = (0, exports.selectSpfRecords)(txtRecords);
-        if (spfFromTxt.length > 0) {
-            console.log(`SPF records for ${domain} from TXT: ${(0, utils_1.parseNestedObject)(spfFromTxt)}`);
+        try {
+            const ipAddress = yield nsResolver.resolve(domain, "A");
+            console.log(`IP address for ${domain}: ${ipAddress}`);
+            reports.push({
+                email,
+                title: "IP Address",
+                status: "healthy",
+                message: `IP address for ${domain}: ${ipAddress}`,
+            });
+        }
+        catch (error) {
+            console.error(`Error resolving IP address for ${domain}: ${error}`);
+            reports.push({
+                email,
+                title: "IP Address",
+                status: "unhealthy",
+                message: `Error resolving IP address for ${domain}: ${error}`,
+            });
+        }
+        try {
+            const mxRecords = yield nsResolver.resolveMx(domain);
+            console.log(`MX records for ${domain}: ${(0, utils_1.parseNestedObject)(mxRecords)}`);
+            reports.push({
+                email,
+                title: "MX Records",
+                status: "healthy",
+                message: `MX records for ${domain}:\n${(0, utils_1.parseNestedObject)(mxRecords)}`,
+            });
+        }
+        catch (error) {
+            console.error(`Error resolving MX records for ${domain}: ${error}`);
+            reports.push({
+                email,
+                title: "MX Records",
+                status: "unhealthy",
+                message: `Error resolving MX records for ${domain}: ${error}`,
+            });
+        }
+        try {
+            txtRecords = yield nsResolver.resolveTxt(domain);
+            console.log(`TXT records for ${domain}: ${(0, utils_1.parseNestedObject)(txtRecords)}`);
+            reports.push({
+                email,
+                title: "TXT Records",
+                status: "healthy",
+                message: `TXT records for ${domain}:\n${(0, utils_1.parseNestedObject)(txtRecords)}`,
+            });
+        }
+        catch (error) {
+            console.error(`Error resolving TXT records for ${domain}: ${error}`);
+            reports.push({
+                email,
+                title: "TXT Records",
+                status: "unhealthy",
+                message: `Error resolving TXT records for ${domain}: ${error}`,
+            });
+        }
+        try {
+            const spfRecords = yield nsResolver.resolveTxt(`_spf.${domain}`);
+            console.log(`SPF records for ${domain}: ${(0, utils_1.parseNestedObject)(spfRecords)}`);
             reports.push({
                 email,
                 title: "SPF Records",
                 status: "healthy",
-                message: `SPF records for ${domain}:\n${(0, utils_1.parseNestedObject)(spfFromTxt)}`,
+                message: `SPF records for ${domain}:\n${(0, utils_1.parseNestedObject)(spfRecords)}`,
+            });
+        }
+        catch (error) {
+            const spfFromTxt = (0, exports.selectSpfRecords)(txtRecords);
+            if (spfFromTxt.length > 0) {
+                console.log(`SPF records for ${domain} from TXT: ${(0, utils_1.parseNestedObject)(spfFromTxt)}`);
+                reports.push({
+                    email,
+                    title: "SPF Records",
+                    status: "healthy",
+                    message: `SPF records for ${domain}:\n${(0, utils_1.parseNestedObject)(spfFromTxt)}`,
+                });
+            }
+            else {
+                console.error(`Error resolving SPF records for ${domain}: ${error}`);
+                reports.push({
+                    email,
+                    title: "SPF Records",
+                    status: "unhealthy",
+                    message: `Error resolving SPF records for ${domain}: ${error}`,
+                });
+            }
+        }
+        try {
+            const dmarcRecords = yield nsResolver.resolveTxt(`_dmarc.${domain}`);
+            console.log(`DMARC records for ${domain}: ${(0, utils_1.parseNestedObject)(dmarcRecords)}`);
+            reports.push({
+                email,
+                title: "DMARC Records",
+                status: "healthy",
+                message: `DMARC records for ${domain}:\n${(0, utils_1.parseNestedObject)(dmarcRecords)}`,
+            });
+        }
+        catch (error) {
+            console.error(`Error resolving DMARC records for ${domain}: ${error}`);
+            reports.push({
+                email,
+                title: "DMARC Records",
+                status: "unhealthy",
+                message: `Error resolving DMARC records for ${domain}: ${error}`,
+            });
+        }
+        const dkimRecords = yield (0, exports.resolveDkimRecords)(domain, nsResolver);
+        if (dkimRecords.length > 0) {
+            console.log(`DKIM records for ${domain}: ${(0, utils_1.parseNestedObject)(dkimRecords)}`);
+            reports.push({
+                email,
+                title: "DKIM Records",
+                status: "healthy",
+                message: `DKIM records for ${domain}:\n${(0, utils_1.parseNestedObject)(dkimRecords)}`,
             });
         }
         else {
-            console.error(`Error resolving SPF records for ${domain}: ${error}`);
+            console.error(`Error resolving DKIM records for ${domain}`);
             reports.push({
                 email,
-                title: "SPF Records",
+                title: "DKIM Records",
                 status: "unhealthy",
-                message: `Error resolving SPF records for ${domain}: ${error}`,
+                message: `Error resolving DKIM records for ${domain}: no TXT records found at ${(0, exports.dkimLookupNames)(domain).join(", ")}`,
             });
         }
-    }
-    try {
-        const dmarcRecords = yield node_dns_1.promises.resolveTxt(`_dmarc.${domain}`);
-        console.log(`DMARC records for ${domain}: ${(0, utils_1.parseNestedObject)(dmarcRecords)}`);
-        reports.push({
-            email,
-            title: "DMARC Records",
-            status: "healthy",
-            message: `DMARC records for ${domain}:\n${(0, utils_1.parseNestedObject)(dmarcRecords)}`,
-        });
+        return reports;
     }
     catch (error) {
-        console.error(`Error resolving DMARC records for ${domain}: ${error}`);
+        console.error(`Error resolving DNS records for ${domain}: ${error}`);
         reports.push({
             email,
-            title: "DMARC Records",
+            title: "DNS Records",
             status: "unhealthy",
-            message: `Error resolving DMARC records for ${domain}: ${error}`,
+            message: `Error resolving DNS records for ${domain}: ${error}`,
         });
     }
-    const dkimRecords = yield (0, exports.resolveDkimRecords)(domain);
-    if (dkimRecords.length > 0) {
-        console.log(`DKIM records for ${domain}: ${(0, utils_1.parseNestedObject)(dkimRecords)}`);
-        reports.push({
-            email,
-            title: "DKIM Records",
-            status: "healthy",
-            message: `DKIM records for ${domain}:\n${(0, utils_1.parseNestedObject)(dkimRecords)}`,
-        });
-    }
-    else {
-        console.error(`Error resolving DKIM records for ${domain}`);
-        reports.push({
-            email,
-            title: "DKIM Records",
-            status: "unhealthy",
-            message: `Error resolving DKIM records for ${domain}: no TXT records found at ${(0, exports.dkimLookupNames)(domain).join(", ")}`,
-        });
-    }
-    return reports;
 });
 exports.checkEmailHealth = checkEmailHealth;

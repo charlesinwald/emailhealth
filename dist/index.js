@@ -17,11 +17,11 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     const args = (0, utils_1.readCommandLineArguments)();
     const email = args.email;
     const reports = yield (0, checkEmailHealth_1.checkEmailHealth)(email);
-    const reportScore = reports.reduce((acc, report) => {
+    const reportScore = reports && reports.length > 0 ? reports.reduce((acc, report) => {
         return acc + (report.status === "healthy" ? 1 : 0);
-    }, 0) / reports.length || 0;
+    }, 0) / ((reports === null || reports === void 0 ? void 0 : reports.length) || 0) : 0;
     const app = (0, node_1.createNodeApp)({
-        initialState: { reports, reportScore },
+        initialState: { reports: reports || [], reportScore },
     });
     app.view((state) => core_1.ui.page({
         p: 1,
