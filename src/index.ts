@@ -21,7 +21,7 @@ const main = async () => {
     ui.page({
       p: 1,
       gap: 1,
-      header: ui.header({ title: `Email Health for ${email}` }),
+      header: ui.header({ title: `Email Health for ${email}`, actions: [ui.gauge(state.reportScore, { label: "Health", variant: "compact" })] }),
       body: ui.box(
         {
           width: "full",
@@ -67,7 +67,6 @@ const main = async () => {
               ),
             })),
           }),
-          ui.gauge(state.reportScore, { label: "Health", variant: "compact" }),
         ],
       ),
     }),

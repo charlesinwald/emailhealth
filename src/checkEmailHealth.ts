@@ -1,10 +1,19 @@
 import { promises as dns } from "node:dns";
 import { parseNestedObject } from "./utils";
 import type { Report } from "./types";
+
+const SPF_RECORD_PREFIX = /^v=spf1\b/i;
+
+export const selectSpfRecords = (txtRecords: string[][]): string[] =>
+  txtRecords
+    .map((chunks) => chunks.join(""))
+    .filter((record) => SPF_RECORD_PREFIX.test(record.trim()));
+
 export const checkEmailHealth = async (email: string) => {
   console.log(`Checking email health for ${email}`);
   const domain = email.split("@")[1];
   const reports: Report[] = [];
+  let txtRecords: string[][] = [];
   try {
     const ipAddress = await dns.resolve(domain);
     console.log(`IP address for ${domain}: ${ipAddress}`);
@@ -42,7 +51,7 @@ export const checkEmailHealth = async (email: string) => {
     });
   }
   try {
-    const txtRecords = await dns.resolveTxt(domain);
+    txtRecords = await dns.resolveTxt(domain);
     console.log(`TXT records for ${domain}: ${parseNestedObject(txtRecords)}`);
     reports.push({
       email,
@@ -69,17 +78,32 @@ export const checkEmailHealth = async (email: string) => {
       message: `SPF records for ${domain}:\n${parseNestedObject(spfRecords)}`,
     });
   } catch (error) {
-    console.error(`Error resolving SPF records for ${domain}: ${error}`);
-    reports.push({
-      email,
-      title: "SPF Records",
-      status: "unhealthy",
-      message: `Error resolving SPF records for ${domain}: ${error}`,
-    });
+    const spfFromTxt = selectSpfRecords(txtRecords);
+    if (spfFromTxt.length > 0) {
+      console.log(
+        `SPF records for ${domain} from TXT: ${parseNestedObject(spfFromTxt)}`,
+      );
+      reports.push({
+        email,
+        title: "SPF Records",
+        status: "healthy",
+        message: `SPF records for ${domain}:\n${parseNestedObject(spfFromTxt)}`,
+      });
+    } else {
+      console.error(`Error resolving SPF records for ${domain}: ${error}`);
+      reports.push({
+        email,
+        title: "SPF Records",
+        status: "unhealthy",
+        message: `Error resolving SPF records for ${domain}: ${error}`,
+      });
+    }
   }
   try {
     const dmarcRecords = await dns.resolveTxt(`_dmarc.${domain}`);
-    console.log(`DMARC records for ${domain}: ${parseNestedObject(dmarcRecords)}`);
+    console.log(
+      `DMARC records for ${domain}: ${parseNestedObject(dmarcRecords)}`,
+    );
     reports.push({
       email,
       title: "DMARC Records",
@@ -97,7 +121,9 @@ export const checkEmailHealth = async (email: string) => {
   }
   try {
     const dkimRecords = await dns.resolveTxt(`_dmarc.${domain}`);
-    console.log(`DKIM records for ${domain}: ${parseNestedObject(dkimRecords)}`);
+    console.log(
+      `DKIM records for ${domain}: ${parseNestedObject(dkimRecords)}`,
+    );
     reports.push({
       email,
       title: "DKIM Records",

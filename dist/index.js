@@ -26,7 +26,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
     app.view((state) => core_1.ui.page({
         p: 1,
         gap: 1,
-        header: core_1.ui.header({ title: `Email Health for ${email}` }),
+        header: core_1.ui.header({ title: `Email Health for ${email}`, actions: [core_1.ui.gauge(state.reportScore, { label: "Health", variant: "compact" })] }),
         body: core_1.ui.box({
             width: "full",
             height: "full",
@@ -63,7 +63,6 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                     ]),
                 })),
             }),
-            core_1.ui.gauge(state.reportScore, { label: "Health", variant: "compact" }),
         ]),
     }));
     yield app.start();

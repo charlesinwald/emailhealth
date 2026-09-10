@@ -9,13 +9,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkEmailHealth = void 0;
+exports.checkEmailHealth = exports.selectSpfRecords = void 0;
 const node_dns_1 = require("node:dns");
 const utils_1 = require("./utils");
+const SPF_RECORD_PREFIX = /^v=spf1\b/i;
+const selectSpfRecords = (txtRecords) => txtRecords
+    .map((chunks) => chunks.join(""))
+    .filter((record) => SPF_RECORD_PREFIX.test(record.trim()));
+exports.selectSpfRecords = selectSpfRecords;
 const checkEmailHealth = (email) => __awaiter(void 0, void 0, void 0, function* () {
     console.log(`Checking email health for ${email}`);
     const domain = email.split("@")[1];
     const reports = [];
+    let txtRecords = [];
     try {
         const ipAddress = yield node_dns_1.promises.resolve(domain);
         console.log(`IP address for ${domain}: ${ipAddress}`);
@@ -55,7 +61,7 @@ const checkEmailHealth = (email) => __awaiter(void 0, void 0, void 0, function* 
         });
     }
     try {
-        const txtRecords = yield node_dns_1.promises.resolveTxt(domain);
+        txtRecords = yield node_dns_1.promises.resolveTxt(domain);
         console.log(`TXT records for ${domain}: ${(0, utils_1.parseNestedObject)(txtRecords)}`);
         reports.push({
             email,
@@ -84,13 +90,25 @@ const checkEmailHealth = (email) => __awaiter(void 0, void 0, void 0, function* 
         });
     }
     catch (error) {
-        console.error(`Error resolving SPF records for ${domain}: ${error}`);
-        reports.push({
-            email,
-            title: "SPF Records",
-            status: "unhealthy",
-            message: `Error resolving SPF records for ${domain}: ${error}`,
-        });
+        const spfFromTxt = (0, exports.selectSpfRecords)(txtRecords);
+        if (spfFromTxt.length > 0) {
+            console.log(`SPF records for ${domain} from TXT: ${(0, utils_1.parseNestedObject)(spfFromTxt)}`);
+            reports.push({
+                email,
+                title: "SPF Records",
+                status: "healthy",
+                message: `SPF records for ${domain}:\n${(0, utils_1.parseNestedObject)(spfFromTxt)}`,
+            });
+        }
+        else {
+            console.error(`Error resolving SPF records for ${domain}: ${error}`);
+            reports.push({
+                email,
+                title: "SPF Records",
+                status: "unhealthy",
+                message: `Error resolving SPF records for ${domain}: ${error}`,
+            });
+        }
     }
     try {
         const dmarcRecords = yield node_dns_1.promises.resolveTxt(`_dmarc.${domain}`);
