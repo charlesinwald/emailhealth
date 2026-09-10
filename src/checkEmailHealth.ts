@@ -200,5 +200,6 @@ export const checkEmailHealth = async (email: string) => {
       status: "unhealthy",
       message: `Error resolving DNS records for ${domain}: ${error}`,
     });
+    return reports;
   }
 };

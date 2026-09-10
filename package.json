@@ -19,7 +19,8 @@
   "main": "dist/index.ts",
   "scripts": {
     "start": "tsc && npx tsx dist/index.js",
-    "build": "tsc"
+    "build": "tsc",
+    "test": "tsc && node --test dist/utils.test.js"
   },
   "devDependencies": {
     "@types/node": "^26.5.0",

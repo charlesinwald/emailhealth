@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.formatReportMessage = exports.parseNestedObject = exports.readCommandLineArguments = void 0;
+exports.copyToClipboard = exports.getOSType = exports.formatReportMessage = exports.parseNestedObject = exports.readCommandLineArguments = void 0;
+const child_process_1 = require("child_process");
 const commander_1 = require("commander");
 // Ensure the email is a valid email address with Regex
 function validateEmail(email) {
@@ -34,3 +35,35 @@ const parseNestedObject = (obj) => {
 exports.parseNestedObject = parseNestedObject;
 const formatReportMessage = (message) => message.replace(/\\n/g, "\n");
 exports.formatReportMessage = formatReportMessage;
+const getOSType = () => {
+    switch (process.platform) {
+        case "darwin":
+            return "macOS";
+        case "linux":
+            return "Linux";
+        case "win32":
+            return "Windows";
+        default:
+            return "Unknown";
+    }
+};
+exports.getOSType = getOSType;
+const copyToClipboard = (text) => {
+    switch ((0, exports.getOSType)()) {
+        case "Windows":
+            (0, child_process_1.execFileSync)("clip", [], { input: text, stdio: ["pipe", "ignore", "pipe"] });
+            return;
+        case "macOS":
+            (0, child_process_1.execFileSync)("pbcopy", [], { input: text, stdio: ["pipe", "ignore", "pipe"] });
+            return;
+        case "Linux":
+            (0, child_process_1.execFileSync)("xclip", ["-selection", "clipboard"], {
+                input: text,
+                stdio: ["pipe", "ignore", "pipe"],
+            });
+            return;
+        default:
+            return text;
+    }
+};
+exports.copyToClipboard = copyToClipboard;

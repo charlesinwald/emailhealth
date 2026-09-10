@@ -195,6 +195,7 @@ const checkEmailHealth = (email) => __awaiter(void 0, void 0, void 0, function* 
             status: "unhealthy",
             message: `Error resolving DNS records for ${domain}: ${error}`,
         });
+        return reports;
     }
 });
 exports.checkEmailHealth = checkEmailHealth;

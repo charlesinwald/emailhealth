@@ -1,3 +1,4 @@
+import { execFileSync } from "child_process";
 import { program } from "commander";
 
 // Ensure the email is a valid email address with Regex
@@ -29,5 +30,38 @@ export const readCommandLineArguments = () => {
 export const parseNestedObject = (obj: any) => {
   return JSON.stringify(obj, null, 2);
 };
+
 export const formatReportMessage = (message: string) =>
   message.replace(/\\n/g, "\n");
+
+export const getOSType = () => {
+  switch (process.platform) {
+    case "darwin":
+      return "macOS";
+    case "linux":
+      return "Linux";
+    case "win32":
+      return "Windows";
+    default:
+      return "Unknown";
+  }
+};
+
+export const copyToClipboard = (text: string) => {
+  switch (getOSType()) {
+    case "Windows":
+      execFileSync("clip", [], { input: text, stdio: ["pipe", "ignore", "pipe"] });
+      return;
+    case "macOS":
+      execFileSync("pbcopy", [], { input: text, stdio: ["pipe", "ignore", "pipe"] });
+      return;
+    case "Linux":
+      execFileSync("xclip", ["-selection", "clipboard"], {
+        input: text,
+        stdio: ["pipe", "ignore", "pipe"],
+      });
+      return;
+    default:
+      return text;
+  }
+};
