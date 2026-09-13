@@ -69,7 +69,7 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
                         }, [
                             core_1.ui.column({ gap: 1, width: "full", flex: 1 }, [
                                 core_1.ui.row({ gap: 1, items: "center", wrap: true }, [
-                                    core_1.ui.text(heading, { variant: "heading" }),
+                                    core_1.ui.text(heading, { variant: "heading", wrap: true }),
                                     core_1.ui.button({
                                         id: `copy-${report.title}`,
                                         label: "Copy",

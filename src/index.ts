@@ -74,7 +74,7 @@ const main = async () => {
                   [
                     ui.column({ gap: 1, width: "full", flex: 1 }, [
                       ui.row({ gap: 1, items: "center", wrap: true }, [
-                        ui.text(heading, { variant: "heading" }),
+                        ui.text(heading, { variant: "heading", wrap: true }),
                         ui.button({
                           id: `copy-${report.title}`,
                           label: "Copy",

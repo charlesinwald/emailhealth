@@ -20,7 +20,7 @@
   "scripts": {
     "start": "tsc && npx tsx dist/index.js",
     "build": "tsc",
-    "test": "tsc && node --test dist/utils.test.js"
+    "test": "tsc && node --test dist/*.test.js"
   },
   "devDependencies": {
     "@types/node": "^26.5.0",

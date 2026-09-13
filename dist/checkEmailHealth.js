@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.checkEmailHealth = exports.resolveDkimRecords = exports.dkimLookupNames = exports.selectSpfRecords = void 0;
+exports.checkEmailHealth = exports.DNSErrorHandler = exports.resolveDkimRecords = exports.dkimLookupNames = exports.selectSpfRecords = void 0;
 const node_dns_1 = require("node:dns");
 const utils_1 = require("./utils");
 const SPF_RECORD_PREFIX = /^v=spf1\b/i;
@@ -44,6 +44,31 @@ const resolveDkimRecords = (domain, nsResolver) => __awaiter(void 0, void 0, voi
         : []);
 });
 exports.resolveDkimRecords = resolveDkimRecords;
+const DNSErrorHandler = (error) => {
+    if (error.message.includes("ENOTFOUND")) {
+        return "Domain not found";
+    }
+    else if (error.message.includes("ENODATA")) {
+        return "No DNS data found";
+    }
+    else if (error.message.includes("ETIMEOUT")) {
+        return "DNS resolution timed out";
+    }
+    else if (error.message.includes("ECONNREFUSED")) {
+        return "DNS resolution refused";
+    }
+    else if (error.message.includes("ECONNRESET")) {
+        return "DNS connection reset";
+    }
+    else if (error.message.includes("ECONNABORTED")) {
+        return "DNS connection aborted";
+    }
+    else if (error.message.includes("ECONNRESET")) {
+        return "DNS connection reset";
+    }
+    return "DNS resolution failed";
+};
+exports.DNSErrorHandler = DNSErrorHandler;
 const checkEmailHealth = (email) => __awaiter(void 0, void 0, void 0, function* () {
     console.log(`Checking email health for ${email}`);
     const domain = email.split("@")[1];
@@ -70,32 +95,50 @@ const checkEmailHealth = (email) => __awaiter(void 0, void 0, void 0, function* 
             });
         }
         catch (error) {
-            console.error(`Error resolving IP address for ${domain}: ${error}`);
-            reports.push({
-                email,
-                title: "IP Address",
-                status: "unhealthy",
-                message: `Error resolving IP address for ${domain}: ${error}`,
-            });
+            if (error instanceof Error) {
+                console.error(`Error resolving IP address for ${domain}: ${(0, exports.DNSErrorHandler)(error)}`);
+                reports.push({
+                    email,
+                    title: "IP Address",
+                    status: "unhealthy",
+                    message: `Error resolving IP address for ${domain}: ${(0, exports.DNSErrorHandler)(error)}`,
+                });
+            }
         }
         try {
             const mxRecords = yield nsResolver.resolveMx(domain);
             console.log(`MX records for ${domain}: ${(0, utils_1.parseNestedObject)(mxRecords)}`);
-            reports.push({
-                email,
-                title: "MX Records",
-                status: "healthy",
-                message: `MX records for ${domain}:\n${(0, utils_1.parseNestedObject)(mxRecords)}`,
-            });
+            if (mxRecords.length > 0) {
+                const sortedMxRecords = mxRecords.sort((a, b) => a.priority - b.priority);
+                const containsNullRecords = sortedMxRecords.some(record => record.exchange === ".");
+                if (containsNullRecords) {
+                    reports.push({
+                        email,
+                        title: "MX Records",
+                        status: "unhealthy",
+                        message: `MX records for ${domain} contain null records`,
+                    });
+                }
+                else {
+                    reports.push({
+                        email,
+                        title: "MX Records",
+                        status: "healthy",
+                        message: `MX records for ${domain}:\n${(0, utils_1.parseNestedObject)(sortedMxRecords)}`,
+                    });
+                }
+            }
         }
         catch (error) {
-            console.error(`Error resolving MX records for ${domain}: ${error}`);
-            reports.push({
-                email,
-                title: "MX Records",
-                status: "unhealthy",
-                message: `Error resolving MX records for ${domain}: ${error}`,
-            });
+            if (error instanceof Error) {
+                console.error(`Error resolving MX records for ${domain}: ${(0, exports.DNSErrorHandler)(error)}`);
+                reports.push({
+                    email,
+                    title: "MX Records",
+                    status: "unhealthy",
+                    message: `Error resolving MX records for ${domain}: ${(0, exports.DNSErrorHandler)(error)}`,
+                });
+            }
         }
         try {
             txtRecords = yield nsResolver.resolveTxt(domain);
@@ -108,13 +151,15 @@ const checkEmailHealth = (email) => __awaiter(void 0, void 0, void 0, function* 
             });
         }
         catch (error) {
-            console.error(`Error resolving TXT records for ${domain}: ${error}`);
-            reports.push({
-                email,
-                title: "TXT Records",
-                status: "unhealthy",
-                message: `Error resolving TXT records for ${domain}: ${error}`,
-            });
+            if (error instanceof Error) {
+                console.error(`Error resolving TXT records for ${domain}: ${(0, exports.DNSErrorHandler)(error)}`);
+                reports.push({
+                    email,
+                    title: "TXT Records",
+                    status: "unhealthy",
+                    message: `Error resolving TXT records for ${domain}: ${(0, exports.DNSErrorHandler)(error)}`,
+                });
+            }
         }
         try {
             const spfRecords = yield nsResolver.resolveTxt(`_spf.${domain}`);
@@ -139,12 +184,14 @@ const checkEmailHealth = (email) => __awaiter(void 0, void 0, void 0, function* 
             }
             else {
                 console.error(`Error resolving SPF records for ${domain}: ${error}`);
-                reports.push({
-                    email,
-                    title: "SPF Records",
-                    status: "unhealthy",
-                    message: `Error resolving SPF records for ${domain}: ${error}`,
-                });
+                if (error instanceof Error) {
+                    reports.push({
+                        email,
+                        title: "SPF Records",
+                        status: "unhealthy",
+                        message: `Error resolving SPF records for ${domain}: ${(0, exports.DNSErrorHandler)(error)}`,
+                    });
+                }
             }
         }
         try {
@@ -158,13 +205,15 @@ const checkEmailHealth = (email) => __awaiter(void 0, void 0, void 0, function* 
             });
         }
         catch (error) {
-            console.error(`Error resolving DMARC records for ${domain}: ${error}`);
-            reports.push({
-                email,
-                title: "DMARC Records",
-                status: "unhealthy",
-                message: `Error resolving DMARC records for ${domain}: ${error}`,
-            });
+            if (error instanceof Error) {
+                console.error(`Error resolving DMARC records for ${domain}: ${(0, exports.DNSErrorHandler)(error)}`);
+                reports.push({
+                    email,
+                    title: "DMARC Records",
+                    status: "unhealthy",
+                    message: `Error resolving DMARC records for ${domain}: ${(0, exports.DNSErrorHandler)(error)}`,
+                });
+            }
         }
         const dkimRecords = yield (0, exports.resolveDkimRecords)(domain, nsResolver);
         if (dkimRecords.length > 0) {
@@ -188,13 +237,15 @@ const checkEmailHealth = (email) => __awaiter(void 0, void 0, void 0, function* 
         return reports;
     }
     catch (error) {
-        console.error(`Error resolving DNS records for ${domain}: ${error}`);
-        reports.push({
-            email,
-            title: "DNS Records",
-            status: "unhealthy",
-            message: `Error resolving DNS records for ${domain}: ${error}`,
-        });
+        if (error instanceof Error) {
+            console.error(`Error resolving DNS records for ${domain}: ${(0, exports.DNSErrorHandler)(error)}`);
+            reports.push({
+                email,
+                title: "DNS Records",
+                status: "unhealthy",
+                message: `Error resolving DNS records for ${domain}: ${(0, exports.DNSErrorHandler)(error)}`,
+            });
+        }
         return reports;
     }
 });
