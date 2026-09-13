@@ -41,65 +41,79 @@ const main = () => __awaiter(void 0, void 0, void 0, function* () {
             p: 1,
             border: "none",
         }, [
-            core_1.ui.accordion({
-                id: "reports",
-                expanded: state.reports
-                    .filter((report) => report.expanded)
-                    .map((report) => report.title),
-                onChange: (expanded) => {
-                    app.update((s) => ({
-                        reports: s.reports.map((report) => (Object.assign(Object.assign({}, report), { expanded: expanded.includes(report.title) }))),
-                        reportScore: state.reportScore,
-                    }));
-                },
-                items: state.reports.map((report) => {
-                    var _a;
-                    const lines = (0, utils_1.formatReportMessage)(report.message).split("\n");
-                    const heading = (_a = lines[0]) !== null && _a !== void 0 ? _a : report.title;
-                    const bodyLines = lines.slice(1);
-                    return {
-                        key: report.title,
-                        title: ` ${report.status === "healthy" ? "✓" : "✗"} ${report.title} (${report.status.charAt(0).toUpperCase() + report.status.slice(1)})`,
-                        content: core_1.ui.box({
-                            preset: "card",
-                            width: "full",
-                            flex: 1,
-                            p: 1,
-                            border: "none",
-                        }, [
-                            core_1.ui.column({ gap: 1, width: "full", flex: 1 }, [
-                                core_1.ui.row({ gap: 1, items: "center", wrap: true }, [
-                                    core_1.ui.text(heading, { variant: "heading", wrap: true }),
-                                    core_1.ui.button({
-                                        id: `copy-${report.title}`,
-                                        label: "Copy",
-                                        dsVariant: "solid",
-                                        dsSize: "sm",
-                                        onPress: () => {
-                                            (0, utils_1.copyToClipboard)((0, utils_1.formatReportMessage)(report.message));
-                                        },
-                                    }),
-                                ]),
-                                ...(bodyLines.length > 0
-                                    ? [
-                                        core_1.ui.virtualList({
-                                            id: `report-${report.title}`,
-                                            items: bodyLines,
-                                            estimateItemHeight: 1,
-                                            width: "full",
-                                            flex: 1,
-                                            renderItem: (line, index) => core_1.ui.text(line.length > 0 ? line : " ", {
+            core_1.ui.focusTrap({ id: "reports-focus-trap", active: true }, [
+                core_1.ui.column({ gap: 1, width: "full", height: "full", flex: 1, justify: "between", items: "stretch" }, [
+                    core_1.ui.accordion({
+                        id: "reports",
+                        expanded: state.reports
+                            .filter((report) => report.expanded)
+                            .map((report) => report.title),
+                        onChange: (expanded) => {
+                            app.update((s) => ({
+                                reports: s.reports.map((report) => (Object.assign(Object.assign({}, report), { expanded: expanded.includes(report.title) }))),
+                                reportScore: state.reportScore,
+                            }));
+                        },
+                        items: state.reports.map((report) => {
+                            var _a;
+                            const lines = (0, utils_1.formatReportMessage)(report.message).split("\n");
+                            const heading = (_a = lines[0]) !== null && _a !== void 0 ? _a : report.title;
+                            const bodyLines = lines.slice(1);
+                            return {
+                                key: report.title,
+                                title: ` ${report.status === "healthy" ? "✓" : "✗"} ${report.title} (${report.status.charAt(0).toUpperCase() + report.status.slice(1)})`,
+                                content: core_1.ui.box({
+                                    preset: "card",
+                                    width: "full",
+                                    flex: 1,
+                                    p: 1,
+                                    border: "none",
+                                }, [
+                                    core_1.ui.column({ gap: 1, width: "full", flex: 1 }, [
+                                        core_1.ui.row({ gap: 1, items: "center", wrap: true }, [
+                                            core_1.ui.text(heading, {
+                                                variant: "heading",
                                                 wrap: true,
-                                                key: `line-${index}`,
                                             }),
-                                        }),
-                                    ]
-                                    : []),
-                            ]),
-                        ]),
-                    };
-                }),
-            }),
+                                            core_1.ui.button({
+                                                id: `copy-${report.title}`,
+                                                label: "Copy",
+                                                dsVariant: "solid",
+                                                dsSize: "sm",
+                                                onPress: () => {
+                                                    (0, utils_1.copyToClipboard)((0, utils_1.formatReportMessage)(report.message));
+                                                },
+                                            }),
+                                        ]),
+                                        ...(bodyLines.length > 0
+                                            ? [
+                                                core_1.ui.virtualList({
+                                                    id: `report-${report.title}`,
+                                                    items: bodyLines,
+                                                    estimateItemHeight: 1,
+                                                    width: "full",
+                                                    flex: 1,
+                                                    renderItem: (line, index) => core_1.ui.text(line.length > 0 ? line : " ", {
+                                                        wrap: true,
+                                                        key: `line-${index}`,
+                                                    }),
+                                                }),
+                                            ]
+                                            : []),
+                                    ]),
+                                ]),
+                            };
+                        }),
+                    }),
+                    core_1.ui.row({ gap: 2 }, [
+                        core_1.ui.row({ gap: 1 }, [core_1.ui.kbd("Mouse"), core_1.ui.text("Full Interaction")]),
+                        core_1.ui.row({ gap: 1 }, [core_1.ui.kbd("Up Arrow"), core_1.ui.text("Up/Scroll")]),
+                        core_1.ui.row({ gap: 1 }, [core_1.ui.kbd("Down Arrow"), core_1.ui.text("Down/Scroll")]),
+                        core_1.ui.row({ gap: 1 }, [core_1.ui.kbd("Enter"), core_1.ui.text("Open")]),
+                        core_1.ui.row({ gap: 1 }, [core_1.ui.kbd("q"), core_1.ui.text("Quit")]),
+                    ]),
+                ]),
+            ]),
         ]),
     }));
     yield app.start();

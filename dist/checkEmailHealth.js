@@ -22,10 +22,12 @@ const COMMON_DKIM_SELECTORS = [
     "selector1",
     "selector2",
 ];
+// checks for SPF records in the TXT records when not found by the SPF record prefix
 const selectSpfRecords = (txtRecords) => txtRecords
     .map((chunks) => chunks.join(""))
     .filter((record) => SPF_RECORD_PREFIX.test(record.trim()));
 exports.selectSpfRecords = selectSpfRecords;
+// checks for DKIM records at the domain and some common selectors
 const dkimLookupNames = (domain) => [
     `_domainkey.${domain}`,
     ...COMMON_DKIM_SELECTORS.map((selector) => `${selector}._domainkey.${domain}`),

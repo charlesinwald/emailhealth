@@ -42,73 +42,87 @@ const main = async () => {
           border: "none",
         },
         [
-          ui.accordion({
-            id: "reports",
-            expanded: state.reports
-              .filter((report) => report.expanded)
-              .map((report) => report.title),
-            onChange: (expanded) => {
-              app.update((s) => ({
-                reports: s.reports.map((report) => ({
-                  ...report,
-                  expanded: expanded.includes(report.title),
-                })),
-                reportScore: state.reportScore,
-              }));
-            },
-            items: state.reports.map((report) => {
-              const lines = formatReportMessage(report.message).split("\n");
-              const heading = lines[0] ?? report.title;
-              const bodyLines = lines.slice(1);
-              return {
-                key: report.title,
-                title: ` ${report.status === "healthy" ? "✓" : "✗"} ${report.title} (${report.status.charAt(0).toUpperCase() + report.status.slice(1)})`,
-                content: ui.box(
-                  {
-                    preset: "card",
-                    width: "full",
-                    flex: 1,
-                    p: 1,
-                    border: "none",
-                  },
-                  [
-                    ui.column({ gap: 1, width: "full", flex: 1 }, [
-                      ui.row({ gap: 1, items: "center", wrap: true }, [
-                        ui.text(heading, { variant: "heading", wrap: true }),
-                        ui.button({
-                          id: `copy-${report.title}`,
-                          label: "Copy",
-                          dsVariant: "solid",
-                          dsSize: "sm",
-                          onPress: () => {
-                            copyToClipboard(
-                              formatReportMessage(report.message),
-                            );
-                          },
-                        }),
-                      ]),
-                      ...(bodyLines.length > 0
-                        ? [
-                            ui.virtualList({
-                              id: `report-${report.title}`,
-                              items: bodyLines,
-                              estimateItemHeight: 1,
-                              width: "full",
-                              flex: 1,
-                              renderItem: (line, index) =>
-                                ui.text(line.length > 0 ? line : " ", {
-                                  wrap: true,
-                                  key: `line-${index}`,
-                                }),
+          ui.focusTrap({ id: "reports-focus-trap", active: true }, [
+            ui.column({ gap: 1, width: "full", height: "full", flex: 1, justify: "between", items: "stretch" }, [
+              ui.accordion({
+                id: "reports",
+                expanded: state.reports
+                  .filter((report) => report.expanded)
+                  .map((report) => report.title),
+                onChange: (expanded) => {
+                  app.update((s) => ({
+                    reports: s.reports.map((report) => ({
+                      ...report,
+                      expanded: expanded.includes(report.title),
+                    })),
+                    reportScore: state.reportScore,
+                  }));
+                },
+                items: state.reports.map((report) => {
+                  const lines = formatReportMessage(report.message).split("\n");
+                  const heading = lines[0] ?? report.title;
+                  const bodyLines = lines.slice(1);
+                  return {
+                    key: report.title,
+                    title: ` ${report.status === "healthy" ? "✓" : "✗"} ${report.title} (${report.status.charAt(0).toUpperCase() + report.status.slice(1)})`,
+                    content: ui.box(
+                      {
+                        preset: "card",
+                        width: "full",
+                        flex: 1,
+                        p: 1,
+                        border: "none",
+                      },
+                      [
+                        ui.column({ gap: 1, width: "full", flex: 1 }, [
+                          ui.row({ gap: 1, items: "center", wrap: true }, [
+                            ui.text(heading, {
+                              variant: "heading",
+                              wrap: true,
                             }),
-                          ]
-                        : []),
-                    ]),
-                  ],
-                ),
-              };
-            }),
-          }),
+                            ui.button({
+                              id: `copy-${report.title}`,
+                              label: "Copy",
+                              dsVariant: "solid",
+                              dsSize: "sm",
+                              onPress: () => {
+                                copyToClipboard(
+                                  formatReportMessage(report.message),
+                                );
+                              },
+                            }),
+                          ]),
+                          ...(bodyLines.length > 0
+                            ? [
+                                ui.virtualList({
+                                  id: `report-${report.title}`,
+                                  items: bodyLines,
+                                  estimateItemHeight: 1,
+                                  width: "full",
+                                  flex: 1,
+                                  renderItem: (line, index) =>
+                                    ui.text(line.length > 0 ? line : " ", {
+                                      wrap: true,
+                                      key: `line-${index}`,
+                                    }),
+                                }),
+                              ]
+                            : []),
+                        ]),
+                      ],
+                    ),
+                  };
+                }),
+              }),
+              ui.row({ gap: 2 }, [
+                ui.row({ gap: 1 }, [ui.kbd("Mouse"), ui.text("Full Interaction")]),
+                ui.row({ gap: 1 }, [ui.kbd("Up Arrow"), ui.text("Up/Scroll")]),
+                ui.row({ gap: 1 }, [ui.kbd("Down Arrow"), ui.text("Down/Scroll")]),
+                ui.row({ gap: 1 }, [ui.kbd("Enter"), ui.text("Open")]),
+                ui.row({ gap: 1 }, [ui.kbd("q"), ui.text("Quit")]),
+              ]),
+            ]),
+          ]),
         ],
       ),
     }),
