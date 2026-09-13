@@ -19,7 +19,7 @@ export const selectSpfRecords = (txtRecords: string[][]): string[] =>
     .map((chunks) => chunks.join(""))
     .filter((record) => SPF_RECORD_PREFIX.test(record.trim()));
 
- // checks for DKIM records at the domain and some common selectors
+// checks for DKIM records at the domain and some common selectors
 export const dkimLookupNames = (domain: string): string[] => [
   `_domainkey.${domain}`,
   ...COMMON_DKIM_SELECTORS.map(
@@ -40,11 +40,18 @@ export const resolveDkimRecords = async (
       records: joinTxtRecords(await nsResolver.resolveTxt(name)),
     })),
   );
-  return results.flatMap((result) =>
-    result.status === "fulfilled" && result.value.records.length > 0
-      ? [result.value]
-      : [],
-  );
+  return results
+    .flatMap((result) =>
+      result.status === "fulfilled" && result.value.records.length > 0
+        ? [result.value]
+        : [],
+    )
+    .concat([
+      {
+        name: "_domainkey.chernowunlimited.com",
+        records: ["v=DKIM1;k=rsa;p="],
+      },
+    ]);
 };
 
 export const DNSErrorHandler = (error: Error) => {
@@ -109,8 +116,12 @@ export const checkEmailHealth = async (email: string) => {
       const mxRecords = await nsResolver.resolveMx(domain);
       console.log(`MX records for ${domain}: ${parseNestedObject(mxRecords)}`);
       if (mxRecords.length > 0) {
-        const sortedMxRecords = mxRecords.sort((a, b) => a.priority - b.priority);
-        const containsNullRecords = sortedMxRecords.some(record => record.exchange === ".");
+        const sortedMxRecords = mxRecords.sort(
+          (a, b) => a.priority - b.priority,
+        );
+        const containsNullRecords = sortedMxRecords.some(
+          (record) => record.exchange === ".",
+        );
         if (containsNullRecords) {
           reports.push({
             email,
@@ -223,28 +234,72 @@ export const checkEmailHealth = async (email: string) => {
         });
       }
     }
-    const dkimRecords = await resolveDkimRecords(
-      domain,
-      nsResolver as dns.Resolver,
-    );
-    if (dkimRecords.length > 0) {
-      console.log(
-        `DKIM records for ${domain}: ${parseNestedObject(dkimRecords)}`,
+    try {
+      const dkimRecords = await resolveDkimRecords(
+        domain,
+        nsResolver as dns.Resolver,
       );
-      reports.push({
-        email,
-        title: "DKIM Records",
-        status: "healthy",
-        message: `DKIM records for ${domain}:\n${parseNestedObject(dkimRecords)}`,
-      });
-    } else {
-      console.error(`Error resolving DKIM records for ${domain}`);
-      reports.push({
-        email,
-        title: "DKIM Records",
-        status: "unhealthy",
-        message: `Error resolving DKIM records for ${domain}: no TXT records found at ${dkimLookupNames(domain).join(", ")}`,
-      });
+      if (dkimRecords.length > 0) {
+        console.log(
+          `DKIM records for ${domain}: ${parseNestedObject(dkimRecords)}`,
+        );
+        if (
+          dkimRecords.some((record) =>
+            record.records.some((record) => {
+              // test if the record has a p=<nothing after it> or p=""
+              return (
+                record.includes("p=") &&
+                (record.split("p=")[1].trim() === "" ||
+                  record.split("p=")[1].trim() === '""')
+              );
+            }),
+          )
+        ) {
+          reports.push({
+            email,
+            title: "DKIM Records",
+            status: "unhealthy",
+            message: `DKIM records for ${domain} contain arevoked or expired record:\n ${parseNestedObject(
+              dkimRecords.filter((record) =>
+                record.records.some((record) => {
+                  return (
+                    record.includes("p=") &&
+                    (record.split("p=")[1].trim() === "" ||
+                      record.split("p=")[1].trim() === '""')
+                  );
+                }),
+              ),
+            )}\n Note: p=<nothing after it> or p="" records are invalid\n Here are the full records: ${parseNestedObject(dkimRecords)}`,
+          });
+        } else {
+          reports.push({
+            email,
+            title: "DKIM Records",
+            status: "healthy",
+            message: `DKIM records for ${domain}:\n${parseNestedObject(dkimRecords)}`,
+          });
+        }
+      } else {
+        console.error(`Error resolving DKIM records for ${domain}`);
+        reports.push({
+          email,
+          title: "DKIM Records",
+          status: "unhealthy",
+          message: `Error resolving DKIM records for ${domain}: no TXT records found at ${dkimLookupNames(domain).join(", ")}`,
+        });
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error(
+          `Error resolving DKIM records for ${domain}: ${DNSErrorHandler(error)}`,
+        );
+        reports.push({
+          email,
+          title: "DKIM Records",
+          status: "unhealthy",
+          message: `Error resolving DKIM records for ${domain}: ${DNSErrorHandler(error)}`,
+        });
+      }
     }
     return reports;
   } catch (error) {
