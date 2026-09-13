@@ -1,5 +1,6 @@
 import { execFileSync } from "child_process";
 import { program } from "commander";
+import crypto from "crypto";
 
 // Ensure the email is a valid email address with Regex
 function validateEmail(email: string) {
@@ -63,5 +64,17 @@ export const copyToClipboard = (text: string) => {
       return;
     default:
       return text;
+  }
+};
+
+
+export const checkKeyLength = (key: string) => {
+  try {
+  const cryptoKey = crypto.createPublicKey({key: Buffer.from(key, "base64"), format: "der", type: "spki"});
+    const modulusLength = cryptoKey.asymmetricKeyDetails?.modulusLength;
+    return modulusLength;
+  } catch (error) {
+    console.error(`Error checking key length: ${error}`);
+    return 0;
   }
 };

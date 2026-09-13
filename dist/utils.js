@@ -1,8 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.copyToClipboard = exports.getOSType = exports.formatReportMessage = exports.parseNestedObject = exports.readCommandLineArguments = void 0;
+exports.checkKeyLength = exports.copyToClipboard = exports.getOSType = exports.formatReportMessage = exports.parseNestedObject = exports.readCommandLineArguments = void 0;
 const child_process_1 = require("child_process");
 const commander_1 = require("commander");
+const crypto_1 = __importDefault(require("crypto"));
 // Ensure the email is a valid email address with Regex
 function validateEmail(email) {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -67,3 +71,16 @@ const copyToClipboard = (text) => {
     }
 };
 exports.copyToClipboard = copyToClipboard;
+const checkKeyLength = (key) => {
+    var _a;
+    try {
+        const cryptoKey = crypto_1.default.createPublicKey({ key: Buffer.from(key, "base64"), format: "der", type: "spki" });
+        const modulusLength = (_a = cryptoKey.asymmetricKeyDetails) === null || _a === void 0 ? void 0 : _a.modulusLength;
+        return modulusLength;
+    }
+    catch (error) {
+        console.error(`Error checking key length: ${error}`);
+        return 0;
+    }
+};
+exports.checkKeyLength = checkKeyLength;

@@ -1,5 +1,5 @@
 import { promises as dns } from "node:dns";
-import { parseNestedObject } from "./utils";
+import { checkKeyLength, parseNestedObject } from "./utils";
 import type { Report } from "./types";
 
 const SPF_RECORD_PREFIX = /^v=spf1\b/i;
@@ -40,18 +40,29 @@ export const resolveDkimRecords = async (
       records: joinTxtRecords(await nsResolver.resolveTxt(name)),
     })),
   );
-  return results
-    .flatMap((result) =>
-      result.status === "fulfilled" && result.value.records.length > 0
-        ? [result.value]
-        : [],
-    )
-    .concat([
-      {
-        name: "_domainkey.chernowunlimited.com",
-        records: ["v=DKIM1;k=rsa;p="],
-      },
-    ]);
+  return (
+    results
+      .flatMap((result) =>
+        result.status === "fulfilled" && result.value.records.length > 0
+          ? [result.value]
+          : [],
+      )
+      // For testing revoked or expired DKIM records
+      // .concat([
+      //   {
+      //     name: "_domainkey.chernowunlimited.com",
+      //     records: ["v=DKIM1;k=rsa;p="],
+      //   },
+      // ]);
+      .concat([
+        {
+          name: "_domainkey.chernowunlimited.com",
+          records: [
+            "v=DKIM1;k=rsa;p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoiOG8IV2ZiPVwra15f1DGJkPukHLsfv8s8ClW",
+          ],
+        },
+      ])
+  );
 };
 
 export const DNSErrorHandler = (error: Error) => {
@@ -271,6 +282,31 @@ export const checkEmailHealth = async (email: string) => {
               ),
             )}\n Note: p=<nothing after it> or p="" records are invalid\n Here are the full records: ${parseNestedObject(dkimRecords)}`,
           });
+        } 
+        else if (dkimRecords.some((record) => record.records.some((record) => {
+          const recordSplit = record.split("p=");
+          if (recordSplit.length > 1) {
+            const key = recordSplit[1].trim();
+            return key && (checkKeyLength(key) || 0) < 1024;
+          }
+          return false;
+        }))) {
+          const unhealthyRecords = dkimRecords.filter((record) => record.records.some((record) => {
+            const recordSplit = record.split("p=");
+            if (recordSplit.length > 1) {
+              const key = recordSplit[1].trim();
+              return key && (checkKeyLength(key) || 0) < 1024;
+            }
+            return false;
+          }));
+          if (unhealthyRecords.length > 0) {
+            reports.push({
+              email,
+              title: "DKIM Records",
+              status: "unhealthy",
+              message: `DKIM records for ${domain} contain a key length less than 1024, or an invalid key::\n${parseNestedObject(unhealthyRecords)}`,
+            });
+          }
         } else {
           reports.push({
             email,
