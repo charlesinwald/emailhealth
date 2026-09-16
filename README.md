@@ -23,6 +23,14 @@ Each check is reported as **healthy**, **unhealthy**, or **unknown**, and an ove
 
 ## Installation
 
+### Global install from NPM
+
+
+```bash
+npm install -g emailhealth
+```
+
+
 ### From source
 
 ```bash
@@ -32,13 +40,6 @@ yarn install
 yarn build
 ```
 
-### Global install (once published to npm)
-
-This package is not yet published to npm. Once it is, it'll be installable with:
-
-```bash
-npm install -g emailhealth
-```
 
 ## Usage
 
