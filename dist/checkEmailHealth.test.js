@@ -53,3 +53,42 @@ const checkEmailHealth_1 = require("./checkEmailHealth");
         "DKIM Records",
     ]);
 }));
+(0, node_test_1.test)("returns a report when the DKIM key length is less than 1024", (t) => __awaiter(void 0, void 0, void 0, function* () {
+    t.mock.method(node_dns_1.promises.Resolver.prototype, "resolveTxt", (name) => __awaiter(void 0, void 0, void 0, function* () {
+        if (name.includes("_domainkey."))
+            return [["v=DKIM1; k=rsa; p=abc"]];
+        return [["v=spf1 include:_spf.google.com ~all"]];
+    }));
+    const reports = yield (0, checkEmailHealth_1.checkEmailHealth)("charles@chernowunlimited.com");
+    console.log(reports);
+    strict_1.default.ok(reports, "checkEmailHealth must return a reports array");
+    strict_1.default.ok(reports.map((report) => report.title).includes("DKIM Records"));
+}));
+(0, node_test_1.test)("returns a report when the DKIM key length is less than 1024", (t) => __awaiter(void 0, void 0, void 0, function* () {
+    t.mock.method(node_dns_1.promises.Resolver.prototype, "resolveTxt", (name) => __awaiter(void 0, void 0, void 0, function* () {
+        if (name.includes("_domainkey."))
+            return [["v=DKIM1; k=rsa; p=abc"]];
+        return [["v=spf1 include:_spf.google.com ~all"]];
+    }));
+}));
+(0, node_test_1.test)("returns SPF reports when the SPF record is not valid", (t) => __awaiter(void 0, void 0, void 0, function* () {
+    t.mock.method(node_dns_1.promises.Resolver.prototype, "resolveTxt", (name) => __awaiter(void 0, void 0, void 0, function* () {
+        if (name.includes("_spf."))
+            return [["v=spf1 include:_spf.google.com ~all"]];
+        return [["v=spf1 include:_spf.google.com ~all"]];
+    }));
+}));
+(0, node_test_1.test)("returns a report SPF Health", (t) => __awaiter(void 0, void 0, void 0, function* () {
+    t.mock.method(node_dns_1.promises.Resolver.prototype, "resolveTxt", (name) => __awaiter(void 0, void 0, void 0, function* () {
+        if (name.includes("_domainkey."))
+            return [
+                {
+                    name: "_domainkey.chernowunlimited.com",
+                    records: [
+                        "v=DKIM1;k=rsa;p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoiOG8IV2ZiPVwra15f1DGJkPukHLsfv8s8ClWr73iUSKh3tAMEuEFFWRQvdMB09aTA8JRzA82GhupZ8OgxDewCvL1DjL0h4sfR0fTXMrsCE/gH9dVZY0Xqq7NfuGzgBwBpiwwY1BlvUuEsJ+NwoCqbq6WHjXLz2HTGE7OsojKMogwG8XETOcki/BCwThJJgeYqoW4SMfaRl9yUCpkpUJr8rIUAtnjSvEzk8Eacinx60MMUYKPs7YB5UpZgvMBYvdt1n2rL4pxNLg1JnUMVox9OY0JJ5JGawlqLZxYCulwcKM3+T6wZHeYGELOEPPxGDw0WfTBPGuJjHmwXnjp4yEewIDAQAB",
+                    ],
+                },
+            ];
+        return [["v=spf1 include:_spf.google.com ~all"]];
+    }));
+}));

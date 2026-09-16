@@ -54,14 +54,14 @@ export const resolveDkimRecords = async (
       //     records: ["v=DKIM1;k=rsa;p="],
       //   },
       // ]);
-      .concat([
-        {
-          name: "_domainkey.chernowunlimited.com",
-          records: [
-            "v=DKIM1;k=rsa;p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoiOG8IV2ZiPVwra15f1DGJkPukHLsfv8s8ClW",
-          ],
-        },
-      ])
+      // .concat([
+      //   {
+      //     name: "_domainkey.chernowunlimited.com",
+      //     records: [
+      //       "v=DKIM1;k=rsa;p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoiOG8IV2ZiPVwra15f1DGJkPukHLsfv8s8ClW",
+      //     ],
+      //   },
+      // ])
   );
 };
 

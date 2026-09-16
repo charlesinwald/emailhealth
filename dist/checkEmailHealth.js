@@ -45,21 +45,22 @@ const resolveDkimRecords = (domain, nsResolver) => __awaiter(void 0, void 0, voi
         .flatMap((result) => result.status === "fulfilled" && result.value.records.length > 0
         ? [result.value]
         : [])
-        // For testing revoked or expired DKIM records
-        // .concat([
-        //   {
-        //     name: "_domainkey.chernowunlimited.com",
-        //     records: ["v=DKIM1;k=rsa;p="],
-        //   },
-        // ]);
-        .concat([
-        {
-            name: "_domainkey.chernowunlimited.com",
-            records: [
-                "v=DKIM1;k=rsa;p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoiOG8IV2ZiPVwra15f1DGJkPukHLsfv8s8ClW",
-            ],
-        },
-    ]));
+    // For testing revoked or expired DKIM records
+    // .concat([
+    //   {
+    //     name: "_domainkey.chernowunlimited.com",
+    //     records: ["v=DKIM1;k=rsa;p="],
+    //   },
+    // ]);
+    // .concat([
+    //   {
+    //     name: "_domainkey.chernowunlimited.com",
+    //     records: [
+    //       "v=DKIM1;k=rsa;p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoiOG8IV2ZiPVwra15f1DGJkPukHLsfv8s8ClW",
+    //     ],
+    //   },
+    // ])
+    );
 });
 exports.resolveDkimRecords = resolveDkimRecords;
 const DNSErrorHandler = (error) => {
