@@ -16,11 +16,18 @@
   "license": "ISC",
   "author": "Charles Inwald",
   "type": "commonjs",
-  "main": "dist/index.ts",
+  "main": "dist/index.js",
+  "bin": {
+    "emailhealth": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "start": "tsc && npx tsx dist/index.js",
     "build": "tsc",
-    "test": "tsc && node --test dist/*.test.js"
+    "test": "tsc && node --test dist/*.test.js",
+    "prepublishOnly": "yarn build"
   },
   "devDependencies": {
     "@types/node": "^26.5.0",
